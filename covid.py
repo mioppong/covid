@@ -21,3 +21,4 @@ class MyStreamListener(tweepy.StreamListener):
             return False
 
 print("yo")
+print('works')
