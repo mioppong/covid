@@ -1,5 +1,7 @@
 import tweepy
-
+import config
+import pycountry
+from pprint import pprint
 
 #authentication needed for twitter
 auth = tweepy.OAuthHandler(config.api_key,config.api_secret)
@@ -13,6 +15,8 @@ class MyStreamListener(tweepy.StreamListener):
 
     def on_status(self,status):
         pass
+        #print(status.text)
+
                        
         
     def on_error(self, status_code):
@@ -20,5 +24,16 @@ class MyStreamListener(tweepy.StreamListener):
             print("ERRORRRRR")
             return False
 
-print("yo")
-print('works')
+
+countries = ['Canada','Italy']
+
+my_stream_listener = MyStreamListener()
+
+#my_stream = tweepy.Stream(auth, listener=my_stream_listener)
+#my_stream.filter(track=countries,is_async=True)
+
+
+for x in (list(pycountry.countries)):
+    print(x.name)
+
+    
