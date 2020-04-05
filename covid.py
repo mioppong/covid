@@ -42,13 +42,13 @@ df['TotalDeaths'] = df['TotalDeaths'].str.replace(annoying_characters, '').astyp
 fig, ax = plt.subplots()
 cmap = cm.get_cmap('Spectral')
 
-df.plot(x='CountryOther',y='TotalCases',ax=ax,kind='bar',log=True,zorder=1)
+#df.plot(x='CountryOther',y='TotalCases',ax=ax,kind='bar',log=True,zorder=1)
 for k, v in df[['CountryOther','TotalCases']].iterrows():
     ax.annotate(str(v['CountryOther'] +'-'+ str(v['TotalCases']) ) ,v, xytext=(10,-5), textcoords='offset points',family='sans-serif', fontsize=8,rotation=50)
 
 ax.get_xaxis().set_visible(False)
 
-df.plot(x='CountryOther',y='TotalDeaths',ax=ax,kind='scatter', linewidth=0, c=range(len(df)), colormap=cmap,zorder=2,label='TotalDeaths')
+#df.plot(x='CountryOther',y='TotalDeaths',ax=ax,kind='scatter', linewidth=0, c=range(len(df)), colormap=cmap,zorder=2,label='TotalDeaths')
 for k, v in df[['CountryOther','TotalDeaths']].iterrows():
     ax.annotate(str(v['CountryOther'] +'-'+ str(v['TotalDeaths']) ) ,v, xytext=(10,-5), textcoords='offset points',family='sans-serif', fontsize=8,rotation=50)
 
@@ -81,15 +81,29 @@ class MyStreamListener(tweepy.StreamListener):
     blob = ""
     def on_status(self,status):
         self.blob = TextBlob(status.text)
-        streamed_dict[x] += self.blob.sentiment.polarity
-        document = list(status.text)
-        response = client.analyze_sentiment(inputs=document)[0]
-        tweet = TextBlob
-        for x in countries:
-            if x in status.text:
-                print(x)
 
-                print(response.sentiment)
+        #streamed_dict[x] += self.blob.sentiment.polarity
+        for x in list(df_sentiment['Country']):
+            if x in status.text:
+                if (self.blob.sentiment.polarity) > 0:
+                    for i, row in df_sentiment.iterrows():
+                        if row['Country'] == x:
+                            df_sentiment.at[i,'positive'] += 1
+                            #row['positive']+= 1
+                    #df_sentiment.loc[df_sentiment.Country.isin(list(status.text))] +=100
+                    #df_sentiment.loc[df_sentiment['Country'] == x].positive +=1
+                    #print(x,df_sentiment.loc[df_sentiment['Country'] == x].positive)
+
+
+                else:
+                    for i, row in df_sentiment.iterrows():
+                        if row['Country'] == x:
+                            df_sentiment.at[i,'negative'] += 1
+                    #print(x,df_sentiment.loc[df_sentiment['Country'] == x].positive)
+                    #df_sentiment.loc[df_sentiment['Country'] == x].negative +=1
+
+
+                print(df_sentiment)
         
     def on_error(self, status_code):
         if status_code == 420:
@@ -104,8 +118,8 @@ for x in list(pycountry.countries):
 
 my_stream_listener = MyStreamListener()
 
-#my_stream = tweepy.Stream(auth, listener=my_stream_listener)
-#my_stream.filter(track=countries,is_async=True)
+my_stream = tweepy.Stream(auth, listener=my_stream_listener)
+my_stream.filter(track=countries,is_async=True)
 
 
 #y_vals = list(range(0,len(countries)))    
@@ -143,5 +157,5 @@ my_stream_listener = MyStreamListener()
     #plt.show()
     #animate(2)
     # 
-#plt.legend()
-#plt.show()
+plt.legend()
+plt.show()
