@@ -10,15 +10,12 @@ import pandas as pd
 import requests
 from matplotlib import cm
 
-cmap = cm.get_cmap('Spectral')
 
-
-
-
+#----------SCRAPING ON WEBSITE BELOW TO FIND TOP COUNTRIES DEALING WITH CORONA
 URL = 'https://www.worldometers.info/coronavirus/'
 response = requests.get(URL)
 soup = BeautifulSoup(response.content, 'html.parser')
-columns = ['CountryOther', 'TotalCases', 'NewCases', 'TotalDeaths', 'NewDeaths', 'TotalRecovered', 'ActiveCases', 'SeriousCritical','9','10']
+columns = ['CountryOther', 'TotalCases', 'NewCases', 'TotalDeaths', 'NewDeaths', 'TotalRecovered', 'ActiveCases', 'SeriousCritical','9','10','11','12']
 df = pd.DataFrame(columns=columns)
 
 
@@ -29,37 +26,57 @@ for tr in trs:
     tds = tr.find_all(['th','td'])
     row = [td.text.replace('\n', '') for td in tds]
     df = df.append(pd.Series(row,index=columns), ignore_index=True)
- 
+
+
+#----------ABOUT TO PLOT THE TOP CORONA CASES VS DEATHS ON A LOGARITHMITIC SCALE
+df = df[['CountryOther', 'TotalCases', 'NewCases', 'TotalDeaths', 'NewDeaths', 'TotalRecovered', 'ActiveCases', 'SeriousCritical']]
+df = df.drop([0])
 df = df.head(20)
-#plt.plot(df['CountryOther'],df['TotalCases'])
-#df['TotalCases'] = df['TotalCases'].astype('float64')
-df['TotalCases'] = df['TotalCases'].str.replace(',', '').astype(float)
+annoying_characters = ',+'
+df['TotalCases'] = df['TotalCases'].str.replace(annoying_characters, '').astype(float)
+df['TotalDeaths'] = df['TotalDeaths'].str.replace(annoying_characters, '').astype(float)
+
+#print(df.head(10))
+
 
 fig, ax = plt.subplots()
+cmap = cm.get_cmap('Spectral')
 
-df.plot(x='CountryOther',y='TotalCases',ax=ax,kind='scatter',s=120, linewidth=0, 
-        c=range(len(df)), colormap=cmap)
+df.plot(x='CountryOther',y='TotalCases',ax=ax,kind='bar',log=True,zorder=1)
 for k, v in df[['CountryOther','TotalCases']].iterrows():
-    #print((v['TotalCases']))
+    ax.annotate(str(v['CountryOther'] +'-'+ str(v['TotalCases']) ) ,v, xytext=(10,-5), textcoords='offset points',family='sans-serif', fontsize=8,rotation=50)
 
-    ax.annotate(str(v['CountryOther'] +'-'+ str(v['TotalCases']) ) ,v, xytext=(10,-5), textcoords='offset points',
-                family='sans-serif', fontsize=10, color='darkslategrey',rotation=40)
+ax.get_xaxis().set_visible(False)
 
-    ax.get_xaxis().set_visible(False)
+df.plot(x='CountryOther',y='TotalDeaths',ax=ax,kind='scatter', linewidth=0, c=range(len(df)), colormap=cmap,zorder=2,label='TotalDeaths')
+for k, v in df[['CountryOther','TotalDeaths']].iterrows():
+    ax.annotate(str(v['CountryOther'] +'-'+ str(v['TotalDeaths']) ) ,v, xytext=(10,-5), textcoords='offset points',family='sans-serif', fontsize=8,rotation=50)
 
-plt.show()
-#fig.canvas.draw()
-#mpld3.show()
+
 #-------------------------------------------------------------------------------------------
 
-#authentication needed for twitter
+
+#----------IN THIS SECTION I AM GOING TO STREAM TWEETS,
+#----------POSITIVE AND NEGATIVE FROM THE COUNTRIES WITH THE TOP CASES
+df_sentiment_columns = ['positive_tweets','negative_tweets']
+df_sentiment = pd.DataFrame()
+#columns=df_sentiment_columns
+df_sentiment['Country'] = df['CountryOther'].head(10)
+df_sentiment['positive'] = 1*'0'
+df_sentiment['positive'] = df_sentiment['positive'].astype('int')
+df_sentiment['negative'] = 1*'0'
+df_sentiment['negative'] = df_sentiment['positive'].astype('int')
+
+
+
+print(df_sentiment)
+#----------authentication needed for twitter
 auth = tweepy.OAuthHandler(config.api_key,config.api_secret)
 auth.set_access_token(config.access_token,config.token_secret)
 api = tweepy.API(auth)
 class MyStreamListener(tweepy.StreamListener):
-    #this method is called everytime there is a tweet
+    #this method is called everytime there is a tweet'
     #basically everytime we see a hashtag, increment each hashtag counter by 1
-
 
     blob = ""
     def on_status(self,status):
@@ -125,3 +142,6 @@ my_stream_listener = MyStreamListener()
     #ani = animation.FuncAnimation(fig, animate, interval=100)
     #plt.show()
     #animate(2)
+    # 
+#plt.legend()
+#plt.show()
